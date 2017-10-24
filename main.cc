@@ -34,9 +34,9 @@ int main()
 
     DPClass<vehicle_model> dp(&car);
 
-    double step_p = 0.1;
+    double step_p = 1;
     double step_v = 0.1;
-    double step_t = 0.1;
+    double step_t = 1;
     for(double t=map_width_s - step_t; t >= 0.0; t -=step_t)
     {
         for(double p = 0l; p < map_height_m; p+= step_p)
@@ -51,6 +51,10 @@ int main()
 
     auto mat = dp.get_all_value();
     normalize(mat, mat, 0, 1, NORM_MINMAX, -1, Mat());
+
+    auto policy_t = dp.get_all_policy();
+    normalize(policy_t, policy_t, 0, 1, NORM_MINMAX, -1, Mat());
+
     //Initialize m
     double minVal;
     double maxVal;
@@ -61,8 +65,12 @@ int main()
     cout << "min val : " << minVal << endl;
     cout << "max val: " << maxVal << endl;
 
-    namedWindow( "Display window", WINDOW_NORMAL);// Create a window for display.
-    imshow( "Display window", mat);               // Show our image inside it.
+    namedWindow( "Display Value", WINDOW_NORMAL);// Create a window for display.
+    imshow( "Display Value", mat);               // Show our image inside it.
+
+    namedWindow( "Display Policy", WINDOW_NORMAL);// Create a window for display.
+    imshow( "Display Policy", policy_t);               // Show our image inside it.
+
     waitKey(0);                                   // Wait for a keystroke in the window
 
     return 0;

@@ -1,7 +1,7 @@
 #pragma once
 
 /*
-  A class for value iteration
+  A class for Dynamic Programming
  */
 
 #include <vector>
@@ -20,7 +20,6 @@ class DPClass
 
     // t, p, v, map
     double dt = 1.0;
-
     double x_step = 1.0; // time
     double y_step = 1.0; // p
     double z_step = 1.0; // v
@@ -38,9 +37,10 @@ class DPClass
 
     // matrices to store value function
     vector<Mat> value_img;
+    vector<Mat> policy_img;
 
     // matrices to store optimal policy
-    vector<vector<vector<control>>> policy;
+    // vector<vector<vector<control>>> policy;
     vehicle_model_t * car;
 
 public:
@@ -48,8 +48,11 @@ public:
     {
         cout << "Value function table is " << n_x << "X" << n_y << "X" << n_z << endl;
         for(size_t i = 0; i < n_x; ++i)
+        {
             value_img.push_back(Mat(n_y, n_z, CV_64FC1, 1e5));
-        policy.assign(n_x, vector<vector<control>> (n_y, vector<control> (n_z, {0})));
+            policy_img.push_back(Mat(n_y, n_z, CV_64FC1, 0.0));
+        }
+        // policy.assign(n_x, vector<vector<control>> (n_y, vector<control> (n_z, {0})));
         car->print_map_info();
     }
 
@@ -71,13 +74,22 @@ public:
         return value_img.at(x_index).at<double>(y_index, z_index);
     }
 
-    control & policy_at(const state & x, double time)
+    control policy_get(const state & x, double time)
     {
         // get value referece
         unsigned x_index, y_index, z_index;
         tie(x_index, y_index, z_index) = get_index(x, time);
-        return policy.at(x_index).at(y_index).at(z_index);
+        return {policy_img.at(x_index).at<double>(y_index, z_index)};
     }
+
+    void policy_set(const control & u, const state & x, double time)
+    {
+        // get value referece
+        unsigned x_index, y_index, z_index;
+        tie(x_index, y_index, z_index) = get_index(x, time);
+        policy_img.at(x_index).at<double>(y_index, z_index) = u[0];
+    }
+
     double value_get(const state & x, double time)
     {
         if(time >= horizon_s)
@@ -96,7 +108,6 @@ public:
     double update(const state & x, double time)
     {
         auto & value_ = value_at(x, time);
-        auto & control_ = policy_at(x, time);
         for(auto u: U)
         {
             auto x_next = car->dynamics(x, u, dt);
@@ -104,9 +115,10 @@ public:
             if ( q < value_)
             {
                 value_ = q;
-                control_ = control(u);
+                policy_set(control(u), x, time);
             }
         }
+
         return value_;
     }
 
@@ -117,4 +129,10 @@ public:
         return V;
     }
 
+    Mat get_all_policy()
+    {
+        Mat V;
+        hconcat(policy_img, V);
+        return V;
+    }
 };
