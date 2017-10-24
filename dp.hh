@@ -60,8 +60,11 @@ public:
     tuple<unsigned, unsigned, unsigned> get_index(const state & x, double time)
     {
         unsigned x_index = min<unsigned>(time / x_step, n_x - 1);
-
-        unsigned y_index = min<unsigned>(x[0] / y_step, n_y - 1);
+        // for OpenCV, the origin is on the top left
+        // x is downwards
+        // y is rightwards
+        // Revert y-axis to make it look more intuitive
+        unsigned y_index = max<unsigned>(0, min<unsigned>(n_y - 1 - (x[0] / y_step), n_y - 1));
         unsigned z_index = min<unsigned>(x[1] / z_step, n_z - 1);
         return make_tuple(x_index, y_index, z_index);
     }
@@ -79,6 +82,16 @@ public:
         // get value referece
         unsigned x_index, y_index, z_index;
         tie(x_index, y_index, z_index) = get_index(x, time);
+        if(find(U.begin(), U.end(),
+                control({policy_img.at(x_index).at<double>(y_index, z_index)}))
+           == U.end())
+        {
+            cout << x_index << " " << y_index << " "
+                 << z_index << " "
+                 << policy_img.at(x_index).at<double>(y_index, z_index) << endl;
+            cout << "error" << endl;
+        }
+
         return {policy_img.at(x_index).at<double>(y_index, z_index)};
     }
 

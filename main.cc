@@ -22,11 +22,14 @@ constexpr double min_speed = 0.0;
 
 int main()
 {
+    using state = vehicle_model::state;
+    using control = vehicle_model::control;
     const double map_width_s = 10.0;
     const double map_height_m = 100.0;
     // read image
-    Mat img = imread("pt_map.png", 0);   // Read the file
+    Mat img = imread("/home/cgliu/pt_map.png", 0);   // Read the file
     img.convertTo(img, CV_64FC1);
+
     //
     pt_map map(img, map_width_s, map_height_m);
 
@@ -43,7 +46,7 @@ int main()
         {
             for(double v = 0.0l; v < max_speed; v += step_v)
             {
-                vehicle_model::state x = {p, v};
+                state x = {p, v};
                 dp.update(x, t);
             }
         }
@@ -55,21 +58,31 @@ int main()
     auto policy_t = dp.get_all_policy();
     normalize(policy_t, policy_t, 0, 1, NORM_MINMAX, -1, Mat());
 
-    //Initialize m
-    double minVal;
-    double maxVal;
-    Point minLoc;
-    Point maxLoc;
-    minMaxLoc( mat, &minVal, &maxVal, &minLoc, &maxLoc );
-
-    cout << "min val : " << minVal << endl;
-    cout << "max val: " << maxVal << endl;
+    // show the pt-map
+    namedWindow( "pt-map", WINDOW_NORMAL);
+    imshow( "pt-map", img);
 
     namedWindow( "Display Value", WINDOW_NORMAL);// Create a window for display.
     imshow( "Display Value", mat);               // Show our image inside it.
 
     namedWindow( "Display Policy", WINDOW_NORMAL);// Create a window for display.
     imshow( "Display Policy", policy_t);               // Show our image inside it.
+
+    // show optimal trajectory on pt_map
+    pt_map overlay_map(img, map_width_s, map_height_m);
+
+    state x = {0,0};
+    double sim_dt = 1.0;
+    for(double time = 0; time < 10.0; time += sim_dt)
+    {
+        overlay_map.draw_circle(x[0], time);
+        const auto u = dp.policy_get(x, time);
+        cout << time << " " << u[0] << endl;
+        x = car.dynamics(x, u, sim_dt);
+    }
+
+    namedWindow( "Display Trajectory", WINDOW_NORMAL);// Create a window for display.
+    imshow( "Display Trajectory", overlay_map.get_value());               // Show our image inside it.
 
     waitKey(0);                                   // Wait for a keystroke in the window
 

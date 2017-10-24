@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <vector>
+#include <tuple>
 #include <opencv2/core/core.hpp>
 #include <iostream>
 
@@ -32,20 +33,47 @@ public:
         cout << value_.size() << endl;
         cout << value_.channels() << endl;
     }
+
+    Mat & get_value()
+    {
+        return value_;
+    }
+
     void print_info()
     {
         cout << "map size: " << value_.size() << endl;
     }
 
-    double get(double time, double position)
+    tuple<unsigned, unsigned> get_index(double position, double time)
     {
         // The origin of the image is on the top left,
         // x to the right; y to the bottom
         // x is the column, y is the row
-        auto x_index = min<int>(time * scale_x_, size_x_ -1);
-        auto y_index = max<int>(size_y_ - 1 - position * scale_y_, 0);
-        return value_.at<double>(y_index, x_index) > 100? 0.0l: 1.0l;
+        auto x_index = min<unsigned>(time * scale_x_, size_x_ -1);
+        auto y_index = max<unsigned>(size_y_ - 1 - position * scale_y_, 0);
+        return make_tuple(x_index, y_index);
     }
+
+    double get(double position, double time)
+    {
+        unsigned x_index, y_index;
+        tie(x_index, y_index) = get_index(position, time);
+        return value_.at<double>(y_index, x_index) > 100? 0.0: 1.0;
+    }
+
+    double & at(double position, double time)
+    {
+        unsigned x_index, y_index;
+        tie(x_index, y_index) = get_index(position, time);
+        return value_.at<double>(y_index, x_index);
+    }
+    void draw_circle(double position, double time)
+    {
+        unsigned x_index, y_index;
+        tie(x_index, y_index) = get_index(position, time);
+        circle(value_, {(int)x_index, (int)y_index}, 5, (255, 0, 0), -1);
+    }
+
 };
 
 class vehicle_model{
@@ -74,7 +102,7 @@ public:
 
     double collision(const state & x, double time)
     {
-        return map.get(time, x[0]);
+        return map.get(x[0], time);
     }
 
     double cost(const state & x, const control & u, double time)
@@ -82,19 +110,20 @@ public:
         double total_cost = 0;
 
         // collision cost
-        total_cost += 100.0 * collision(x, time);
+        total_cost += 1.0 * collision(x, time);
 
         // odom reward
-        total_cost += max_speed - x[1];
+        total_cost += 1000000.0 * (max_speed - x[1]);
 
         // control effort
-        total_cost += 100.0 * u[0] * u[0];
+        total_cost += 1.0 * u[0] * u[0];
 
         // speed limits
         double violation = max<double>(0, x[1] - max_speed);
-        total_cost += violation * violation;
+        total_cost += 100.0 * violation * violation;
+
         violation = max<double>(min_speed - x[1], 0.0);
-        total_cost += violation * violation;
+        total_cost += 100.0 * violation * violation;
 
         return total_cost;
     }
