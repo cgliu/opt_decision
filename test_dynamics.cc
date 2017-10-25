@@ -14,7 +14,7 @@ int main()
     Mat img = imread("pt_map.png", 0);   // Read the file
     img.convertTo(img, CV_64FC1);
     pt_map map(img, map_width_s, map_height_m);
-    vehicle_model car(map);
+    vehicle_model car(&map);
     // test pt_map
 
     for(double position = map_height_m; position >=0; position -= 1)
