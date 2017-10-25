@@ -22,6 +22,7 @@ class DPClass
     double x_step = 1.0; // time
     double y_step = 1.0; // p
     double z_step = 1.0; // v
+    double z_offset = 5.0;
     size_t n_x;
     size_t n_y;
     size_t n_z;
@@ -49,7 +50,7 @@ public:
         cout << "x_step " << x_step;
         n_x = horizon_s / x_step; // time
         n_y = lookahead_m / y_step; // position
-        n_z = max_speed / z_step; // velocity
+        n_z = (max_speed + z_offset) / z_step; // velocity
         cout << "Value function table is " << n_x << "X" << n_y << "X" << n_z << endl;
         for(size_t i = 0; i < n_x; ++i)
         {
@@ -66,7 +67,7 @@ public:
     {
         size_t x_index = max<size_t>(0, min<size_t>(time / x_step, n_x - 1));
         size_t y_index = max<size_t>(0, min<size_t>(x[0] / y_step, n_y - 1));
-        size_t z_index = max<size_t>(0, min<size_t>(x[1] / z_step, n_z - 1));
+        size_t z_index = max<size_t>(0, min<size_t>((x[1] + z_offset) / z_step, n_z - 1));
         return make_tuple(x_index, y_index, z_index);
     }
 
@@ -101,7 +102,7 @@ public:
     {
         double alpha = (x[0] / y_step);
         alpha -= (int) alpha;
-        double beta = (x[1] / z_step);
+        double beta = ((x[1] + z_offset) / z_step);
         beta -= (int) beta;
 
         size_t x_index, y_index, z_index;

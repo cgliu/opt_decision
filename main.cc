@@ -41,7 +41,7 @@ int main()
 
     double step_p = 1.0;
     double step_v = 1.0;
-    double step_t = 0.5;
+    double step_t = 1.0;
 
     DPClass<vehicle_model> dp(&car, step_t, step_p, step_v);
 
@@ -49,7 +49,7 @@ int main()
     {
         for(double p = 0l; p < map_height_m; p+= step_p)
         {
-            for(double v = 0.0l; v < max_speed; v += step_v)
+            for(double v = -1.0; v < max_speed; v += step_v)
             {
                 state x = {p, v};
                 dp.update(x, t);
@@ -77,7 +77,7 @@ int main()
 
     pt_map overlay_map(img * 0.5, map_width_s, map_height_m);
 
-    state x = {20.0, 5.0};
+    state x = {20.0, 0.0};
     double sim_dt = 0.5;
     for(double time = 0; time < 10.0; time += sim_dt)
     {
