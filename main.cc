@@ -71,6 +71,7 @@ int main()
     DPClass<vehicle_model> dp(car, step_t, step_p, step_v);
 
     auto start = chrono::high_resolution_clock::now();
+
     for(double t=map_width_s - step_t; t >= 0.0; t -=step_t)
     {
         size_t job_id = 0;
@@ -111,7 +112,7 @@ int main()
 
     pt_map overlay_map(img * 0.5, map_width_s, map_height_m);
 
-    state x = {50.0, 0.0};
+    state x = {20.0, 0.0};
     double sim_dt = 0.5;
     cout << "time\tcontrol\n";
     for(double time = 0; time < 10.0; time += sim_dt)
