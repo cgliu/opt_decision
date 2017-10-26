@@ -2,21 +2,22 @@
 
 #include <iostream>
 #include <opencv2/core/core.hpp>
-#include "opencv2/imgproc/imgproc.hpp"
-
-using namespace std;
-using namespace cv;
+#include <opencv2/imgproc/imgproc.hpp>
 
 class pt_map
 {
-    Mat value_;
+    cv::Mat value_;
     double horizon_s_;
     double lookahead_m_;
     double scale_x_, scale_y_;
-    size_t size_x_, size_y_;
+    std::size_t size_x_, size_y_;
 
 public:
-    pt_map(const Mat & value, double horizon_s, double lookahead_m)
+    ~pt_map()
+    {
+        std::cout << " free pt_map" << std::endl;
+    }
+    pt_map(const cv::Mat & value, double horizon_s, double lookahead_m)
     {
         value_ = value;
         horizon_s_ = horizon_s;
@@ -28,32 +29,32 @@ public:
         scale_y_ = size_y_ / lookahead_m;
 
         // display
-        cout << value_.size() << endl;
-        cout << value_.channels() << endl;
+        std::cout << value_.size() << std::endl;
+        std::cout << value_.channels() << std::endl;
     }
 
-    string show_info()
+    std::string show_info()
     {
-        cout << "map size: " <<
-            size_x_ << "X" << size_y_ << endl;
+        std::cout << "map size: " <<
+            size_x_ << "X" << size_y_ << std::endl;
     }
 
-    Mat & get_value()
+    cv::Mat & get_value()
     {
         return value_;
     }
 
-    tuple<size_t, size_t> get_index(double position, double time)
+    std::tuple<std::size_t, std::size_t> get_index(double position, double time)
     {
-        auto x_index = min<size_t>(max<size_t>(0, time * scale_x_), size_x_ -1);
-        auto y_index = min<size_t>(max<size_t>(0, position * scale_y_), size_y_ - 1);
-        return make_tuple(x_index, y_index);
+        auto x_index = std::min<std::size_t>(std::max<std::size_t>(0, time * scale_x_), size_x_ -1);
+        auto y_index = std::min<std::size_t>(std::max<std::size_t>(0, position * scale_y_), size_y_ - 1);
+        return std::make_tuple(x_index, y_index);
     }
 
     double & at(double position, double time)
     {
-        size_t x_index, y_index;
-        tie(x_index, y_index) = get_index(position, time);
+        std::size_t x_index, y_index;
+        std::tie(x_index, y_index) = get_index(position, time);
         return value_.at<double>(y_index, x_index);
     }
 
@@ -64,9 +65,9 @@ public:
 
     void draw_circle(double position, double time)
     {
-        size_t x_index, y_index;
-        tie(x_index, y_index) = get_index(position, time);
-        circle(value_, {(int)x_index, (int)y_index}, 5, (255, 0, 0), -1);
+        std::size_t x_index, y_index;
+        std::tie(x_index, y_index) = get_index(position, time);
+        cv::circle(value_, {(int)x_index, (int)y_index}, 5, (255, 0, 0), -1);
     }
 
 };

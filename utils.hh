@@ -1,12 +1,13 @@
 #pragma once
 
+#include <opencv2/contrib/contrib.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-Mat flip(Mat img)
+cv::Mat flip(Mat img)
 {
-    Mat out;
-    flip(img, out, 0);
+    cv::Mat out;
+    cv::flip(img, out, 0);
     return out;
 }
 
@@ -15,11 +16,11 @@ Mat flip(Mat img)
 // @param [in] data Mat
 // @return     Colormap Mat
 //
-Mat for_show(Mat img)
+cv::Mat for_show(cv::Mat img)
 {
-    Mat img_sc;
+    cv::Mat img_sc;
     img.convertTo(img_sc, CV_8U, 255.0);
-    Mat img_cm;
-    applyColorMap(img_sc, img_cm, COLORMAP_JET);
+    cv::Mat img_cm;
+    cv::applyColorMap(img_sc, img_cm, COLORMAP_JET);
     return flip(img_cm);
 }

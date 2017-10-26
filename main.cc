@@ -1,3 +1,5 @@
+// Optimal decisoion making using Dynamic Programming
+
 #include "dynamics.hh"
 #include "dp.hh"
 #include "utils.hh"
@@ -6,18 +8,12 @@
 #include <cassert>
 #include <iostream>
 #include <iomanip>
-#include <vector>
 #include <tuple>
+#include <vector>
 
 
 using namespace std;
 using namespace cv;
-
-constexpr double dt = 1.0;
-constexpr double horizon_s = 10.0;
-constexpr double lookahead_m = 100.0;
-constexpr double max_speed = 10.0;
-constexpr double min_speed = 0.0;
 
 
 
@@ -25,12 +21,19 @@ int main()
 {
     using state = vehicle_model::state;
     using control = vehicle_model::control;
+
     const double map_width_s = 10.0;
     const double map_height_m = 100.0;
-    // read image
+
+    const double max_speed_mps = 10.0;
+
+    // Read grayscale image and use it as a pt_map
     Mat img = imread("pt_map.png", 0);   // Read the file
-    // convert white to 0, black to 1
+
+    // We need to flip the image because we the x-axis is upwards
     img = flip(img);
+
+    // Binarization, white to be 0
     Mat dest;
     threshold(img, dest, 127, 1, CV_THRESH_BINARY_INV);
     dest.convertTo(dest, CV_64FC1);
@@ -49,7 +52,7 @@ int main()
     {
         for(double p = 0l; p < map_height_m; p+= step_p)
         {
-            for(double v = -1.0; v < max_speed; v += step_v)
+            for(double v = -1.0; v < max_speed_mps; v += step_v)
             {
                 state x = {p, v};
                 dp.update(x, t);
