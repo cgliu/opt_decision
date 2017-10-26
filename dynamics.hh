@@ -9,14 +9,13 @@
 class vehicle_model{
     double max_speed = 20.0;
     double min_speed = 0.0;
-    pt_map * map;
+    std::shared_ptr<pt_map> map;
 
 public:
     using state = std::array<double, 2>;
     using control = std::array<double, 1>;
 
-    vehicle_model(pt_map * input_map) : map(input_map) {
-        std::cout << "Initialize vehicle_model" << std::endl;
+    vehicle_model(std::shared_ptr<pt_map> input_map) : map(input_map) {
     }
 
     state dynamics(state x, control u, double dt)

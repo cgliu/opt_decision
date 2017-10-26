@@ -1,9 +1,5 @@
 #pragma once
 
-/*
-  A class for Dynamic Programming
- */
-
 #include <vector>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -30,36 +26,34 @@ class DPClass
 
     double horizon_s = 10.0;
     double lookahead_m = 100.0;
-    double max_speed = 10l;
+    double max_speed = 10.0;
 
 
-    // Candidate controls
+    // control set
     vector<control> U;
 
-    // matrices to store value function
+    // Matrices to store value function
     vector<Mat> value_img;
     vector<Mat> policy_img;
 
-    // matrices to store optimal policy
-    // vector<vector<vector<control>>> policy;
-    vehicle_model_t * car;
+    std::shared_ptr<vehicle_model_t> car;
 
 public:
-    DPClass(vehicle_model_t * model, double x_step, double  y_step, double z_step) :
+    DPClass(std::shared_ptr<vehicle_model_t> model,
+            double x_step, double  y_step, double z_step) :
         car(model), x_step(x_step), y_step(y_step), z_step(z_step)
     {
-        cout << "x_step " << x_step;
         n_x = horizon_s / x_step; // time
         n_y = lookahead_m / y_step; // position
         n_z = (max_speed + z_offset) / z_step; // velocity
-        cout << "Value function table is " << n_x << "X" << n_y << "X" << n_z << endl;
+        cout << "Value function table size: " << n_x << "X" << n_y << "X" << n_z << endl;
         for(size_t i = 0; i < n_x; ++i)
         {
             value_img.push_back(Mat(n_y, n_z, CV_64FC1, 1e6));
             policy_img.push_back(Mat(n_y, n_z, CV_64FC1, 0.0));
         }
         // discretize action
-        for(double u = -4.05; u < 4.05; u += 0.1)
+        for(double u = -4.0; u < 4.0; u += 1.0)
             U.push_back({u});
     }
 

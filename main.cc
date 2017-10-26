@@ -5,6 +5,7 @@
 #include "utils.hh"
 
 #include <array>
+#include <chrono>  // for high_resolution_clock
 #include <cassert>
 #include <iostream>
 #include <iomanip>
@@ -14,8 +15,6 @@
 
 using namespace std;
 using namespace cv;
-
-
 
 int main()
 {
@@ -38,16 +37,16 @@ int main()
     threshold(img, dest, 127, 1, CV_THRESH_BINARY_INV);
     dest.convertTo(dest, CV_64FC1);
 
-    pt_map map(dest, map_width_s, map_height_m);
-
-    vehicle_model car(&map);
+    auto map = make_shared<pt_map>(dest, map_width_s, map_height_m);
+    auto car = make_shared<vehicle_model>(map);
 
     double step_p = 1.0;
     double step_v = 1.0;
     double step_t = 1.0;
 
-    DPClass<vehicle_model> dp(&car, step_t, step_p, step_v);
+    DPClass<vehicle_model> dp(car, step_t, step_p, step_v);
 
+    auto start = chrono::high_resolution_clock::now();
     for(double t=map_width_s - step_t; t >= 0.0; t -=step_t)
     {
         for(double p = 0l; p < map_height_m; p+= step_p)
@@ -60,40 +59,45 @@ int main()
         }
     }
 
+    auto finish = chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duration = finish - start;
+    cout << "Optimization time: " << duration.count() << " s" << endl;
+
     auto value_t = dp.get_all_value();
     normalize(value_t, value_t, 0, 1, NORM_MINMAX, -1, Mat());
 
     auto policy_t = dp.get_all_policy();
     normalize(policy_t, policy_t, 0, 1, NORM_MINMAX, -1, Mat());
 
-    // show the pt-map
-    namedWindow( "pt-map", WINDOW_NORMAL);
-    imshow( "pt-map", flip(img));
+    namedWindow( "PT Map", WINDOW_NORMAL);
+    imshow( "PT Map", flip(img));
 
-    namedWindow( "Display Value", WINDOW_NORMAL);// Create a window for display.
-    imshow( "Display Value", for_show(value_t));               // Show our image inside it.
+    namedWindow( "Display Value", WINDOW_NORMAL);
+    imshow( "Display Value", for_show(value_t));
 
-    namedWindow( "Display Policy", WINDOW_NORMAL);// Create a window for display.
-    imshow( "Display Policy", for_show(policy_t));               // Show our image inside it.
+    namedWindow( "Display Policy", WINDOW_NORMAL);
+    imshow( "Display Policy", for_show(policy_t));
 
     // show optimal trajectory on pt_map
 
     pt_map overlay_map(img * 0.5, map_width_s, map_height_m);
 
-    state x = {20.0, 0.0};
+    state x = {50.0, 0.0};
     double sim_dt = 0.5;
+    cout << "time\tcontrol\n";
     for(double time = 0; time < 10.0; time += sim_dt)
     {
         overlay_map.draw_circle(x[0], time);
         const auto u = dp.policy_get(x, time);
-        cout << time << " " << u[0] << endl;
-        x = car.dynamics(x, u, sim_dt);
+        cout << time << "\t" << u[0] << endl;
+        x = car->dynamics(x, u, sim_dt);
     }
 
-    namedWindow( "Display Trajectory", WINDOW_NORMAL);// Create a window for display.
-    imshow( "Display Trajectory", flip(overlay_map.get_value()));               // Show our image inside it.
+    namedWindow( "Display Trajectory", WINDOW_NORMAL);
+    imshow( "Display Trajectory", flip(overlay_map.get_value()));
 
-    waitKey(0);                                   // Wait for a keystroke in the window
+    cout << "Press any key to exit." << endl;
+    waitKey(0);
 
     return 0;
 }

@@ -13,10 +13,6 @@ class pt_map
     std::size_t size_x_, size_y_;
 
 public:
-    ~pt_map()
-    {
-        std::cout << " free pt_map" << std::endl;
-    }
     pt_map(const cv::Mat & value, double horizon_s, double lookahead_m)
     {
         value_ = value;
@@ -29,8 +25,7 @@ public:
         scale_y_ = size_y_ / lookahead_m;
 
         // display
-        std::cout << value_.size() << std::endl;
-        std::cout << value_.channels() << std::endl;
+        std::cout << "Map size in pixel: " << value_.size() << std::endl;
     }
 
     std::string show_info()
