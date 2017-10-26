@@ -10,16 +10,40 @@
 #include <iostream>
 #include <iomanip>
 #include <tuple>
+#include <thread>
 #include <vector>
 
 
 using namespace std;
 using namespace cv;
+using state = vehicle_model::state;
+using control = vehicle_model::control;
+
+void task(int n, int id)
+{
+    this_thread::sleep_for (chrono::seconds(n));
+    std::cout << "task" << id << " done." << endl;
+}
+
+void value_iteration(size_t job,
+                     DPClass<vehicle_model> * dp,
+                     double t,
+                     double max_p, double min_p, double step_p,
+                     double max_v, double min_v, double step_v)
+{
+
+    for(double p = min_p; p < max_p; p+= step_p)
+    {
+        for(double v = min_v; v < max_v; v += step_v)
+        {
+            state x = {p, v};
+            dp->update(x, t);
+        }
+    }
+}
 
 int main()
 {
-    using state = vehicle_model::state;
-    using control = vehicle_model::control;
 
     const double map_width_s = 10.0;
     const double map_height_m = 100.0;
@@ -49,14 +73,19 @@ int main()
     auto start = chrono::high_resolution_clock::now();
     for(double t=map_width_s - step_t; t >= 0.0; t -=step_t)
     {
-        for(double p = 0l; p < map_height_m; p+= step_p)
+        size_t job_id = 0;
+        vector<thread> jobs;
+        for(double v = -1.0; v < max_speed_mps; v += step_v)
         {
-            for(double v = -1.0; v < max_speed_mps; v += step_v)
-            {
-                state x = {p, v};
-                dp.update(x, t);
-            }
+            jobs.emplace_back(value_iteration,
+                              job_id++,
+                              &dp,
+                              t,
+                              map_height_m, 0, step_p,
+                              v + step_v / 2, v, step_v);
         }
+        for(auto & job: jobs)
+            job.join();
     }
 
     auto finish = chrono::high_resolution_clock::now();
