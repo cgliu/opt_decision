@@ -71,7 +71,22 @@ int main()
     DPClass<vehicle_model> dp(car, step_t, step_p, step_v);
 
     auto start = chrono::high_resolution_clock::now();
-
+#ifdef USE_OMP
+    for(double t=map_width_s - step_t; t >= 0.0; t -=step_t)
+    {
+#pragma omp parallel for num_threads(4)
+        for(int i = 0; i < int(map_height_m / step_p); ++i){
+            double p = i * step_p;
+            for(int j = 0; j < int((max_speed_mps + 1.0) / step_v); ++j)
+            {
+                double v = -1.0 + j * step_v;
+                state x = {p, v};
+                dp.update(x, t);
+                // cout << " Update value at " << i << " " << j << endl;
+            }
+        }
+    }
+#else // use multiple threads
     for(double t=map_width_s - step_t; t >= 0.0; t -=step_t)
     {
         size_t job_id = 0;
@@ -88,7 +103,7 @@ int main()
         for(auto & job: jobs)
             job.join();
     }
-
+#endif
     auto finish = chrono::high_resolution_clock::now();
     std::chrono::duration<double> duration = finish - start;
     cout << "Optimization time: " << duration.count() << " s" << endl;
